@@ -1,42 +1,93 @@
 const {server} = require('../serverModule.js');
 const fs = require('fs');
 
-const regExpG = /<\?PJS(\n)?(.+)(\n)?\?>/igm;
-const regExp = /<\?PJS(\n)?(.+)(\n)?\?>/i;
 const fileName = './index.pjs';
+const openingTagStr = '<?PJS';
+const closingTagStr = '?>';
 
 String.prototype.insertAtIndex = function(index, substr) {
 	return [this.slice(0, index), substr, this.slice(index)].join('');
 }
 
-function parsePJS(str) {
-	const matches = str.match(regExpG);
+String.prototype.allIndexesOf = function(substr) {
+	let pos = this.indexOf(substr);
+	const indexes = [];
 
-	const PJSPrint = (index, ...data) => {
-		str = str.insertAtIndex(index, data.join('\t'));
+	while (pos > -1) {
+		indexes.push(pos);
+		pos = this.indexOf(substr, pos + 1);
 	}
 
-	if (matches) {
-		matches.forEach((object, key) => {
-			const strIndex = str.indexOf(object);
-			const match = object.match(regExp);
+	return indexes;
+}
 
-			// Remove code from orig string
-			str = str.replace(object, '');
+String.prototype.splitAt = function(indexes, openingStr, closeStr) {
+	const substrings = [];
 
-			if (match) {
-				const codeStr = match[2].trim().split(/(\n|;)/).reverse().map(object => {
-					return object.replace(/print\((.+)\)/, `PJSPrint(${strIndex}, $1)`);
-				}).join('');
+	closeStr = closeStr || closingTagStr;
+	openingStr = openingStr || openingTagStr;
+	for (let i = 0; i < indexes.length; i++) {
+		const strPart = this.substr(indexes[i], indexes[i + 1]);
+		const endPos = strPart.indexOf(closeStr);
 
-				console.log(`\x1b[42mRunning code of PJS codeblock of index ${key} in ${fileName}\x1b[0m`);
+		if (endPos) {
+			substrings.push({
+				cut: strPart.substr(openingStr.length, endPos - openingStr.length),
+				orig: strPart.substr(0, endPos + closeStr.length)
+			});
+		} else {
+			throw new Error('No closing tag found!');
+		}
+	}
 
-				eval(codeStr);
+	return substrings;
+}
+
+function parsePJS(str) {
+	let prevCodeblockIndex = 0;
+	let printStrIndex = 0;
+	let parseError;
+
+	const PJSPrint = (position, codeblockIndex, ...data) => {
+		const newStr = data.join('\t');
+
+		if (prevCodeblockIndex != codeblockIndex) {
+			prevCodeblockIndex = codeblockIndex;
+			printStrIndex = 0;
+		}
+
+		str = str.insertAtIndex(position + printStrIndex, newStr);
+		printStrIndex += newStr.length;
+	}
+
+	str.splitAt(str.allIndexesOf(openingTagStr)).forEach((object, key) => {
+		const strIndex = str.indexOf(object.orig);
+
+		// Remove code from orig string
+		str = str.replace(object.orig, '');
+
+		// Replace PJS syntax print function with PJS parser function
+		object.cut.splitAt(object.cut.allIndexesOf('print('), 'print(', ')').forEach(splitObj => {
+			object.cut = object.cut.replace(splitObj.orig, `PJSPrint(${strIndex}, ${key}, ${splitObj.cut})`);
+		});
+
+		console.log(`\x1b[42mRunning code of PJS codeblock of index ${key} in ${fileName}\x1b[0m`);
+
+		try {
+			eval(object.cut);
+		} catch (err) {
+			if (!parseError)
+				parseError = {
+					index: key,
+					err: err
+				};
 			}
 		});
-	}
 
-	return str;
+	if (parseError)
+		return `<div style="font-family: 'Arial', sans-serif"><h1 style="color: red; background-color: rgba(0, 0, 0, 0.8); padding: 5px 0; padding-left: 10px">Error parsing PJS file &#8595;</h1><i style="background-color: darkgray;">Code-block index: ${parseError.index + 1}</i><div style="background-color: lightgray; padding: 10px;">${parseError.err}</div></div>`
+	else
+		return str;
 }
 
 function sendErr(response) {

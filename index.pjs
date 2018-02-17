@@ -7,5 +7,13 @@
 
 	<?PJS print('Test', 'kaas'); console.log('test'); print('kshf'); ?>
 
+	<p>TEST</p>
+
+	<?PJS
+		for (let i = 0; i < 5; i++) {
+			print(`<p>${i}</p>`);
+		}
+	?>
+
 </body>
 </html>
