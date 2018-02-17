@@ -4,7 +4,7 @@ JavaScript variant of PHP
 *Run the index.js for a demonstation*
 
 ## Why?
-I liked that with PHP you could add server-side code to a file, but was far more familiar with JavaScript abd I wanted to use it server-side, client-size and in files.
+I liked that with PHP you could add server-side code to a file, but was far more familiar with JavaScript and I wanted to use it server-side, client-size and in files.
 
 ## How do I use it?
 **Still in early development**
