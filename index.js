@@ -75,6 +75,7 @@ function parsePJS(str) {
 
 		try {
 			eval(object.cut);
+			console.log(`\x1b[43mSuccessfully ran codeblock of index ${key} in ${fileName}\x1b[0m`);
 		} catch (err) {
 			if (!parseError)
 				parseError = {
