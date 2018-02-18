@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Test</title>
+	<title>
+		<?PJS
+			print('TITLE!')
+		?>
+	</title>
 </head>
 <body>
 

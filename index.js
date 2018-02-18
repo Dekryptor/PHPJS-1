@@ -1,15 +1,6 @@
-const {server} = require('../serverModule.js');
-const fs = require('fs');
-const debug = {
-	log: (...data) => {
-		if (process.argv.includes('--debug'))
-			console.log(...data);
-	}
-}
-
-const fileName = './index.pjs';
 const openingTagStr = '<?PJS';
 const closingTagStr = '?>';
+const fs = require('fs');
 
 String.prototype.insertAtIndex = function(index, substr) {
 	return [this.slice(0, index), substr, this.slice(index)].join('');
@@ -50,15 +41,29 @@ String.prototype.splitAt = function(indexes, openingStr, closeStr) {
 }
 
 String.prototype.fillTerminal = function() {
-	const dashLength = (process.stdout.columns - this.length) / 2;
+	let dashLength = (process.stdout.columns - this.length) / 2;
+
+	if (dashLength < 0)
+		dashLength = 0;
 
 	return '-'.repeat(Math.floor(dashLength)) + this + '-'.repeat(Math.ceil(dashLength));
 }
 
-function parsePJS(str) {
+
+
+exports.parse = (str, options, filePath) => {
 	let prevCodeblockIndex = 0;
 	let printStrIndex = 0;
 	let parseError;
+
+	options = options || {};
+
+	const debug = {
+		log: (...data) => {
+			if (options.debug)
+				console.log(...data);
+		}
+	}
 
 	const PJSPrint = (position, codeblockIndex, ...data) => {
 		const newStr = data.join('\t');
@@ -72,7 +77,7 @@ function parsePJS(str) {
 		printStrIndex += newStr.length;
 	}
 
-	debug.log(`\x1b[42m${`Running code in PJS codeblock(s) of ${fileName}`.fillTerminal()}\x1b[0m`);
+	debug.log(`\x1b[42m${`Running code in PJS codeblock(s) of ${filePath}`.fillTerminal()}\x1b[0m`);
 	str.splitAt(str.allIndexesOf(openingTagStr)).forEach((object, key) => {
 		const strIndex = str.indexOf(object.orig);
 
@@ -96,7 +101,7 @@ function parsePJS(str) {
 			}
 		});
 
-	debug.log(`\x1b[100m${`Finished running code for ${fileName}`.fillTerminal()}\x1b[0m`);
+	debug.log(`\x1b[100m${`Finished running code for ${filePath}`.fillTerminal()}\x1b[0m`);
 
 	if (parseError) {
 		debug.log(`\x1b[41m${'There was an error with parsing'.fillTerminal()}\x1b[0m`);
@@ -105,24 +110,19 @@ function parsePJS(str) {
 	} else return str;
 }
 
-function sendErr(response) {
-	response.status(500).send('Webpage not available');
-}
-
-server.get('*', (request, response) => {
-	if (fileName.toLowerCase().endsWith('.pjs')) {
-		fs.readFile(fileName, (err, data) => {
+module.exports.init = app => {
+	app.engine('pjs', (filePath, options, callback) => {
+		fs.readFile(filePath, (err, data) => {
 			if (err)
-				sendErr(response);
+				return callback(err);
 			else {
 				data = data.toString();
-				data = parsePJS(data);
+				data = exports.parse(data, options, filePath);
 
-				response.header({
-					'Content-Length': Buffer.byteLength(data),
-					'Content-Type': 'text/html'
-				}).send(data);
+				return callback(null, data);
 			}
 		});
-	} else response.sendFile(fileName);
-});
+	});
+
+	app.set('view engine', 'pjs');
+}
