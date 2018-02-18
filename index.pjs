@@ -5,7 +5,11 @@
 </head>
 <body>
 
-	<?PJS print('Test', 'kaas'); console.log('test'); print('kshf'); ?>
+	<?PJS
+		const fs = require('fs');
+
+		print(fs.readdirSync('.'));
+	?>
 
 	<p>TEST</p>
 

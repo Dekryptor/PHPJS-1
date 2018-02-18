@@ -1,5 +1,11 @@
 const {server} = require('../serverModule.js');
 const fs = require('fs');
+const debug = {
+	log: (...data) => {
+		if (process.argv.includes('--debug'))
+			console.log(...data);
+	}
+}
 
 const fileName = './index.pjs';
 const openingTagStr = '<?PJS';
@@ -43,6 +49,12 @@ String.prototype.splitAt = function(indexes, openingStr, closeStr) {
 	return substrings;
 }
 
+String.prototype.fillTerminal = function() {
+	const dashLength = (process.stdout.columns - this.length) / 2;
+
+	return '-'.repeat(Math.floor(dashLength)) + this + '-'.repeat(Math.ceil(dashLength));
+}
+
 function parsePJS(str) {
 	let prevCodeblockIndex = 0;
 	let printStrIndex = 0;
@@ -60,6 +72,7 @@ function parsePJS(str) {
 		printStrIndex += newStr.length;
 	}
 
+	debug.log(`\x1b[42m${`Running code in PJS codeblock(s) of ${fileName}`.fillTerminal()}\x1b[0m`);
 	str.splitAt(str.allIndexesOf(openingTagStr)).forEach((object, key) => {
 		const strIndex = str.indexOf(object.orig);
 
@@ -71,11 +84,9 @@ function parsePJS(str) {
 			object.cut = object.cut.replace(splitObj.orig, `PJSPrint(${strIndex}, ${key}, ${splitObj.cut})`);
 		});
 
-		console.log(`\x1b[42mRunning code of PJS codeblock of index ${key} in ${fileName}\x1b[0m`);
-
 		try {
 			eval(object.cut);
-			console.log(`\x1b[43mSuccessfully ran codeblock of index ${key} in ${fileName}\x1b[0m`);
+			debug.log(`\x1b[43m${`Ran code of codeblock at index ${key + 1}`.fillTerminal()}\x1b[0m`);
 		} catch (err) {
 			if (!parseError)
 				parseError = {
@@ -85,10 +96,13 @@ function parsePJS(str) {
 			}
 		});
 
-	if (parseError)
+	debug.log(`\x1b[100m${`Finished running code for ${fileName}`.fillTerminal()}\x1b[0m`);
+
+	if (parseError) {
+		debug.log(`\x1b[41m${'There was an error with parsing'.fillTerminal()}\x1b[0m`);
+
 		return `<div style="font-family: 'Arial', sans-serif"><h1 style="color: red; background-color: rgba(0, 0, 0, 0.8); padding: 5px 0; padding-left: 10px">Error parsing PJS file &#8595;</h1><i style="background-color: darkgray;">Code-block index: ${parseError.index + 1}</i><div style="background-color: lightgray; padding: 10px;">${parseError.err}</div></div>`
-	else
-		return str;
+	} else return str;
 }
 
 function sendErr(response) {
