@@ -4,10 +4,19 @@ const PJS = require('../index.js');
 const app = express();
 
 // Init PJS
-PJS.init(app);
+PJS.init(app, {
+	debug: false
+});
 
 app.get('*', (request, response) => {
-	response.render(__dirname + '/index.pjs');
+	response.render(__dirname + '/index.pjs', {
+		test: 'This " works',
+		func: str => {
+			// Print function is not supported in these functions
+
+			console.log(str);
+		}
+	});
 });
 
 app.listen(8000, err => {

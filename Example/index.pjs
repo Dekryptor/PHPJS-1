@@ -23,5 +23,14 @@
 		}
 	?>
 
+	<hr>
+
+	<?PJS
+		println($test);
+		println($test);
+
+		$func('Test');
+	?>
+
 </body>
 </html>

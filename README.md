@@ -14,5 +14,8 @@ In your project with Express you can use PJS as an templating engine. You need t
 If you don't use Express you can still use it by running the ```parse``` function with the contents of the file you want to parse.
 Everything between the opening (```<?PJS```) and the closing (```?>```) PJS tags in these files will be run as JavaScript code on the server.
 
+The library has built in ```print``` and ```println``` functions for writing to the page. It works the same as *PHP*'s ```echo``` construct.
+The library also includes a built in ```printp``` function. This is used for writing text inside *paragraph element* to the page.
+
 ### Notes
 - **The print function in asynchronous functions is not supported.** Synchronous functions **are** supported, so ```fs.readdirSync``` for example **is** supported.
