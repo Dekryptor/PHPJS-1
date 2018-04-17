@@ -2,7 +2,7 @@ const openingTagStr = '<?PJS';
 const closingTagStr = '?>';
 const fs = require('fs');
 
-let globalSettings;
+let globalSettings = {};
 
 String.prototype.insertAtIndex = function(index, substr) {
 	return [this.slice(0, index), substr, this.slice(index)].join('');
@@ -163,7 +163,8 @@ exports.engine = (filePath, options, callback) => {
 }
 
 module.exports.init = (app, settings) => {
-	globalSettings = settings || {};
+	if (settings)
+		globalSettings = settings;
 
 	app.engine('pjs', exports.engine);
 	app.set('view engine', 'pjs');
