@@ -2,6 +2,8 @@ const openingTagStr = '<?PJS';
 const closingTagStr = '?>';
 const fs = require('fs');
 
+let globalSettings;
+
 String.prototype.insertAtIndex = function(index, substr) {
 	return [this.slice(0, index), substr, this.slice(index)].join('');
 }
@@ -59,7 +61,7 @@ Array.prototype.flatten = function() {
 
 
 
-exports.parse = (str, options, filePath, globalSettings) => {
+exports.parse = (str, options, filePath) => {
 	let prevCodeblockIndex = 0;
 	let printStrIndex = 0;
 	let parseError;
@@ -147,21 +149,22 @@ exports.parse = (str, options, filePath, globalSettings) => {
 	} else return str;
 }
 
-module.exports.init = (app, settings) => {
-	settings = settings || {};
+exports.engine = (filePath, options, callback) => {
+	fs.readFile(filePath, (err, data) => {
+		if (err)
+			return callback(err);
+		else {
+			data = data.toString();
+			data = exports.parse(data, options, filePath);
 
-	app.engine('pjs', (filePath, options, callback) => {
-		fs.readFile(filePath, (err, data) => {
-			if (err)
-				return callback(err);
-			else {
-				data = data.toString();
-				data = exports.parse(data, options, filePath, settings);
-
-				return callback(null, data);
-			}
-		});
+			return callback(null, data);
+		}
 	});
+}
 
+module.exports.init = (app, settings) => {
+	globalSettings = settings || {};
+
+	app.engine('pjs', exports.engine);
 	app.set('view engine', 'pjs');
 }
