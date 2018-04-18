@@ -107,22 +107,7 @@ exports.parse = (str, options, filePath) => {
 
 			if (vars) {
 				vars.forEach(val => {
-					const v = val.replace(/^\$/, '');
-
-					if (v in options) {
-						let optVal = options[v];
-
-						switch ((typeof optVal).toLowerCase()) {
-							case 'string':
-							optVal = `"${optVal.escapeChar('"')}"`;
-							break;
-							case 'function':
-							optVal = `options.${v}`;
-							break;
-						}
-
-						object.cut = object.cut.replace(val, optVal);
-					}
+					object.cut = object.cut.replace(val, val.replace(/^\$/, 'options.'));
 				});
 			}
 		}
