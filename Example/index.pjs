@@ -3,7 +3,7 @@
 <head>
 	<title>
 		<?PJS
-			print('TITLE!')
+			print('TITLE!');
 		?>
 	</title>
 </head>

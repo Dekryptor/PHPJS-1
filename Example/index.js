@@ -13,6 +13,7 @@ app.get('*', (request, response) => {
 		test: 'This " works',
 		func: str => {
 			// Print function is not supported in these functions
+			// You can, however, return a value and print it in the .pjs file
 
 			console.log(str);
 		}

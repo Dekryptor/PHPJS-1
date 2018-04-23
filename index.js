@@ -1,6 +1,9 @@
+const {dirname} = require('path');
+const fs = require('fs');
+const vm = require('vm');
+
 const openingTagStr = '<?PJS';
 const closingTagStr = '?>';
-const fs = require('fs');
 
 let globalSettings = {};
 
@@ -113,7 +116,28 @@ exports.parse = (str, options, filePath) => {
 		}
 
 		try {
-			eval("'use strict';" + object.cut);
+			// All the globals specified in: https://nodejs.org/api/globals.html
+			const sandbox = {
+				options: options,
+				PJSPrint: PJSPrint,
+				require: require,
+				console: console,
+				__dirname: dirname(filePath),
+				__filename: filePath,
+				clearImmediate: clearImmediate,
+				clearInterval: clearInterval,
+				clearTimeout: clearTimeout,
+				setImmediate: setImmediate,
+				setInterval: setInterval,
+				setTimeout: setTimeout,
+				process: process,
+			};
+
+			vm.createContext(sandbox);
+			vm.runInContext(object.cut, sandbox, {
+				displayErrors: true
+			});
+
 			debug.log(`\x1b[43m${`Ran code of codeblock at index ${key + 1}`.fillTerminal()}\x1b[0m`);
 		} catch (err) {
 			if (!parseError) {
