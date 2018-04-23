@@ -1,6 +1,6 @@
 {
   "name": "express-pjs",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "JS variant of PHP",
   "main": "index.js",
   "scripts": {
