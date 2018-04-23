@@ -5,7 +5,11 @@ const vm = require('vm');
 const openingTagStr = '<?PJS';
 const closingTagStr = '?>';
 
-let globalSettings = {};
+let globalSettings = {
+	displayErrors: true,
+	throwErrors: false,
+	debug: true
+};
 
 String.prototype.insertAtIndex = function(index, substr) {
 	return [this.slice(0, index), substr, this.slice(index)].join('');
@@ -154,7 +158,14 @@ exports.parse = (str, options, filePath) => {
 	if (parseError) {
 		debug.log(`\x1b[41m${'There was an error with parsing'.fillTerminal()}\x1b[0m`);
 
-		return `<div style="font-family: 'Arial', sans-serif"><h1 style="color: red; background-color: rgba(0, 0, 0, 0.8); padding: 5px 0; padding-left: 10px">Error parsing PJS file &#8595;</h1><i style="background-color: darkgray;">Code-block ${parseError.index + 1}</i><div style="background-color: lightgray; padding: 10px;">${parseError.err}</div></div>`
+		if (globalSettings.displayErrors)
+			return `<div style="font-family: 'Arial', sans-serif"><h1 style="color: red; background-color: rgba(0, 0, 0, 0.8); padding: 5px 0; padding-left: 10px">Error parsing PJS file &#8595;</h1><i style="background-color: darkgray;">Code-block ${parseError.index + 1}</i><div style="background-color: lightgray; padding: 10px;">${parseError.err}</div></div>`
+		else {
+			if (globalSettings.throwErrors)
+				throw Error(`Unable to parse ${filePath}: ${parseError.err}`);
+
+			return str;
+		}
 	} else return str;
 }
 

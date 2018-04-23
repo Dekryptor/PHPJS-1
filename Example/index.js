@@ -5,7 +5,9 @@ const app = express();
 
 // Init PJS
 PJS.init(app, {
-	debug: false
+	debug: false,
+	throwErrors: false,
+	displayErrors: true
 });
 
 app.get('*', (request, response) => {
